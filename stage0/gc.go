@@ -12,8 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//+build linux
-
 package stage0
 
 import (
@@ -192,7 +190,7 @@ func MountGC(path, uuid string) error {
 	for i := len(mnts) - 1; i >= 0; i -= 1 {
 		mnt := mnts[i]
 		if needsRemountPrivate(mnt) {
-			if err := syscall.Mount("", mnt.mountPoint, "", syscall.MS_PRIVATE, ""); err != nil {
+			if err := remountPrivate(mnt.mountPoint); err != nil {
 				return errwrap.Wrap(fmt.Errorf("could not remount at %v", mnt.mountPoint), err)
 			}
 		}

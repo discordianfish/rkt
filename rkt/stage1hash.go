@@ -17,7 +17,6 @@ package main
 import (
 	"errors"
 	"fmt"
-	"os"
 	"path/filepath"
 	"strings"
 
@@ -25,6 +24,7 @@ import (
 	"github.com/coreos/rkt/common/apps"
 	"github.com/coreos/rkt/rkt/config"
 	"github.com/coreos/rkt/rkt/image"
+	"github.com/coreos/rkt/pkg/sys"
 	"github.com/coreos/rkt/store"
 	"github.com/hashicorp/errwrap"
 	"github.com/spf13/pflag"
@@ -363,7 +363,7 @@ func getStage1HashFromPath(fn *image.Finder, imgLoc, imgFileName string) (*types
 		fetchErr = err
 	}
 	if imgFileName != "" {
-		exePath, err := os.Readlink("/proc/self/exe")
+		exePath, err := sys.SelfPath()
 		if err != nil {
 			fallbackErr = err
 		} else {

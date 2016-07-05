@@ -12,8 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//+build linux
-
 package main
 
 import (
@@ -34,6 +32,7 @@ import (
 	"github.com/coreos/rkt/common"
 	"github.com/coreos/rkt/networking/netinfo"
 	"github.com/coreos/rkt/pkg/label"
+	"github.com/coreos/rkt/pkg/fileutil"
 	"github.com/coreos/rkt/pkg/lock"
 	"github.com/coreos/rkt/pkg/sys"
 	"github.com/hashicorp/errwrap"
@@ -729,7 +728,7 @@ func (p *pod) openFile(path string, flags int) (*os.File, error) {
 		return nil, err
 	}
 
-	fd, err := syscall.Openat(cdirfd, path, flags, 0)
+	fd, err := sys.OpenAt(cdirfd, path, flags)
 	if err != nil {
 		return nil, err
 	}
@@ -819,15 +818,15 @@ func (p *pod) getGCMarkedTime() (time.Time, error) {
 		return time.Time{}, nil
 	}
 
-	st := &syscall.Stat_t{}
-	if err := syscall.Lstat(podPath, st); err != nil {
+	fi, err := os.Lstat(podPath)
+	if err != nil {
 		if err == syscall.ENOENT {
 			// Pod is gone.
 			err = nil
 		}
 		return time.Time{}, err
 	}
-	return time.Unix(st.Ctim.Unix()), nil
+	return fileutil.GetCtime(fi), nil
 }
 
 type ErrChildNotReady struct {

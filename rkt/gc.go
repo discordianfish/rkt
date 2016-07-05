@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//+build linux
+
 
 package main
 
@@ -27,6 +27,8 @@ import (
 	"github.com/coreos/rkt/common"
 	"github.com/coreos/rkt/stage0"
 	"github.com/coreos/rkt/store"
+	"github.com/coreos/rkt/pkg/fileutil"
+	"github.com/coreos/rkt/pkg/sys"
 	"github.com/hashicorp/errwrap"
 	"github.com/spf13/cobra"
 )
@@ -115,15 +117,13 @@ func renameExited() error {
 func emptyExitedGarbage(gracePeriod time.Duration) error {
 	if err := walkPods(includeExitedGarbageDir, func(p *pod) {
 		gp := p.path()
-		st := &syscall.Stat_t{}
-		if err := syscall.Lstat(gp, st); err != nil {
-			if err != syscall.ENOENT {
+		fi, err := os.Lstat(gp)
+		if err != nil {
 				stderr.PrintE(fmt.Sprintf("unable to stat %q, ignoring", gp), err)
-			}
 			return
 		}
 
-		if expiration := time.Unix(st.Ctim.Unix()).Add(gracePeriod); time.Now().After(expiration) {
+		if expiration := fileutil.GetCtime(fi).Add(gracePeriod); time.Now().After(expiration) {
 			if err := p.ExclusiveLock(); err != nil {
 				return
 			}
@@ -158,16 +158,14 @@ func renameAborted() error {
 // renameExpired renames expired prepared pods to the garbage directory
 func renameExpired(preparedExpiration time.Duration) error {
 	if err := walkPods(includePreparedDir, func(p *pod) {
-		st := &syscall.Stat_t{}
 		pp := p.path()
-		if err := syscall.Lstat(pp, st); err != nil {
-			if err != syscall.ENOENT {
+		fi, err := os.Lstat(pp)
+		if err != nil {
 				stderr.PrintE(fmt.Sprintf("unable to stat %q, ignoring", pp), err)
-			}
 			return
 		}
 
-		if expiration := time.Unix(st.Ctim.Unix()).Add(preparedExpiration); time.Now().After(expiration) {
+		if expiration := fileutil.GetCtime(fi).Add(preparedExpiration); time.Now().After(expiration) {
 			stderr.Printf("moving expired prepared pod %q to garbage", p.uuid)
 			if err := p.xToGarbage(); err != nil && err != os.ErrNotExist {
 				stderr.PrintE("rename error", err)
@@ -213,7 +211,7 @@ func mountPodStage1(s *store.Store, p *pod) error {
 	workDir := filepath.Join(imgDir, "work")
 
 	opts := fmt.Sprintf("lowerdir=%s,upperdir=%s,workdir=%s", s1rootfs, upperDir, workDir)
-	if err := syscall.Mount("overlay", stage1Dir, "overlay", 0, opts); err != nil {
+	if err := sys.Mountfs("overlay", stage1Dir, "overlay", 0, opts); err != nil {
 		return errwrap.Wrap(errors.New("error mounting stage1"), err)
 	}
 

@@ -12,8 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//+build linux
-
 package stage0
 
 //
@@ -830,7 +828,7 @@ func overlayRender(cfg RunConfig, treeStoreID string, cdir string, dest string, 
 
 	opts := fmt.Sprintf("lowerdir=%s,upperdir=%s,workdir=%s", cachedTreePath, upperDir, workDir)
 	opts = label.FormatMountLabel(opts, cfg.MountLabel)
-	if err := syscall.Mount("overlay", destRootfs, "overlay", 0, opts); err != nil {
+	if err := mountfs("overlay", destRootfs, "overlay", 0, opts); err != nil {
 		return errwrap.Wrap(errors.New("error mounting"), err)
 	}
 

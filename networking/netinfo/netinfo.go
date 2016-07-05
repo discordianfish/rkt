@@ -19,8 +19,8 @@ import (
 	"net"
 	"os"
 	"path/filepath"
-	"syscall"
 
+	"github.com/coreos/rkt/pkg/sys"
 	"github.com/containernetworking/cni/pkg/types"
 )
 
@@ -38,8 +38,9 @@ type NetInfo struct {
 	IP4        *types.IPConfig `json:"-"`
 }
 
+
 func LoadAt(cdirfd int) ([]NetInfo, error) {
-	fd, err := syscall.Openat(cdirfd, filename, syscall.O_RDONLY, 0)
+	fd, err := sys.OpenAt(cdirfd, filename, 0)
 	if err != nil {
 		return nil, err
 	}

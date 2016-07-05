@@ -1,4 +1,4 @@
-// Copyright 2014 Red Hat, Inc
+// Copyright 2015 The rkt Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,33 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// +build !linux
+// +build linux
 
-package fileutil
+package netinfo
 
 import (
+	"encoding/json"
+	"net"
 	"os"
+	"path/filepath"
 	"syscall"
+
+	"github.com/containernetworking/cni/pkg/types"
 )
 
-func hasHardLinks(fi os.FileInfo) bool {
-	return false
-}
-
-func getInode(fi os.FileInfo) uint64 {
-	return 0
-}
-
-// These functions are from github.com/docker/docker/pkg/system
-
-func LUtimesNano(path string, ts []syscall.Timespec) error {
-	return ErrNotSupportedPlatform
-}
-
-func Lgetxattr(path string, attr string) ([]byte, error) {
-	return nil, ErrNotSupportedPlatform
-}
-
-func Lsetxattr(path string, attr string, data []byte, flags int) error {
-	return ErrNotSupportedPlatform
+func openAt(cdirfd int, path string) (int, error) {
+	return syscall.Openat(cdirfd, filename, syscall.O_RDONLY, 0)
 }

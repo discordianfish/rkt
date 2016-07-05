@@ -31,6 +31,16 @@ func getInode(fi os.FileInfo) uint64 {
 	return fi.Sys().(*syscall.Stat_t).Ino
 }
 
+func GetAtime(fi os.FileInfo) time.Time {
+        stat := fi.Sys().(*syscall.Stat_t)
+        return time.Unix(int64(stat.Atim.Sec), int64(stat.Atim.Nsec))
+}
+
+func GetCtime(fi os.FileInfo) time.Time {
+        stat := fi.Sys().(*syscall.Stat_t)
+        return time.Unix(int64(stat.Ctim.Sec), int64(stat.Ctim.Nsec))
+}
+
 // These functions are from github.com/docker/docker/pkg/system
 
 // TODO(sgotti) waiting for a utimensat functions accepting flags and a
